@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`dark ${display.variable} ${mono.variable} ${sans.variable}`}
     >
-      <body className="antialiased font-sans bg-black text-ink overflow-x-hidden">{children}</body>
+      <body className="antialiased font-sans bg-black text-white overflow-x-hidden">{children}</body>
     </html>
   );
 }

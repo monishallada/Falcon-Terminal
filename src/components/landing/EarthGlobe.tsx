@@ -1,26 +1,21 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
- * A real, slowly rotating 3D Earth — rendered in pure Canvas 2D with no
- * external dependencies. Every frame, each pixel of a circular mask is
- * projected back from the screen onto a sphere, sampled against an
- * equirectangular procedural Earth texture, and shaded by a directional
- * "sun" light to produce the day/night terminator. An additive cyan rim
- * is drawn on top for the atmosphere.
+ * A real, slowly rotating 3D Earth — rendered in pure Canvas 2D using the
+ * actual NASA Blue Marble photographic texture. Every frame, each pixel of
+ * a circular mask is projected back from the screen onto a unit sphere,
+ * sampled against the equirectangular Earth image, and shaded by a
+ * directional "sun" light to produce the day/night terminator. An additive
+ * cyan radial gradient draws the atmosphere on the rim.
  *
- * Why pure 2D instead of WebGL/Three.js?  Self-contained (no texture asset,
- * no library), trivially SSR-safe (gated by useEffect), runs at 60 fps on
- * any device that can run Falcon's other widgets.
- *
- * Design knobs you might tune:
- *   • renderRadius (px)   — size of the rendered globe
- *   • secondsPerRotation  — speed of rotation (default ~80s, meditative)
- *   • lightDir            — direction of the sun in view space
- *   • atmosphereColor     — rim halo
+ * The texture is loaded asynchronously from /textures/earth.jpg (NASA
+ * Blue Marble, 4096×2048, ~1.4 MB). Until it loads we render a
+ * lightweight procedural fallback so the globe is never empty.
  */
 export default function EarthGlobe() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [_loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -29,10 +24,39 @@ export default function EarthGlobe() {
     let raf = 0;
     let cancelled = false;
 
-    // ---- Texture (built once) ----
-    const TEX_W = 1024;
-    const TEX_H = 512;
-    const tex = buildEarthTexture(TEX_W, TEX_H);
+    // ---- Texture state — starts as procedural fallback, swaps in the real
+    // NASA image once it loads. The sphere keeps spinning either way.
+    const FALLBACK_W = 1024;
+    const FALLBACK_H = 512;
+    let tex = buildEarthTexture(FALLBACK_W, FALLBACK_H);
+    let TEX_W = FALLBACK_W;
+    let TEX_H = FALLBACK_H;
+    let tex32 = new Uint32Array(tex.buffer);
+
+    // Async load the photographic texture
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      if (cancelled) return;
+      // Down-sample to 2048x1024 for memory + perf — still photo-quality
+      const targetW = Math.min(2048, img.naturalWidth);
+      const targetH = Math.min(1024, img.naturalHeight);
+      const c = document.createElement("canvas");
+      c.width = targetW;
+      c.height = targetH;
+      const ictx = c.getContext("2d", { willReadFrequently: false });
+      if (!ictx) return;
+      ictx.drawImage(img, 0, 0, targetW, targetH);
+      const data = ictx.getImageData(0, 0, targetW, targetH).data;
+      tex = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
+      TEX_W = targetW;
+      TEX_H = targetH;
+      tex32 = new Uint32Array(tex.buffer);
+      // Recompute the per-pixel latitude row indices for the new texture height
+      setupSphereMask();
+      setLoaded(true);
+    };
+    img.src = "/textures/earth.jpg";
 
     // ---- Render canvas ----
     const canvas = document.createElement("canvas");
@@ -144,7 +168,9 @@ export default function EarthGlobe() {
     const secondsPerRotation = 80; // slow & cinematic
     let last = performance.now();
 
-    const tex32 = new Uint32Array(tex.buffer);
+    // tex32 is captured from the outer scope (gets reassigned when the real
+    // photographic texture finishes loading). We always read tex32 fresh
+    // each frame via the closure variable.
 
     function frame(now: number) {
       if (cancelled) return;
