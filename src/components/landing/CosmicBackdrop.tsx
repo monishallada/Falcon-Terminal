@@ -1,19 +1,17 @@
 "use client";
 import { StarField } from "./StarField";
-import { ShootingStars } from "./ShootingStars";
 
 /**
  * Full-page cosmic backdrop. Fixed-positioned behind everything else on the
- * landing route, so the starfield, nebulae, and shooting stars are visible
- * across every section as the user scrolls — Falcon's "operating in space"
- * brand language carried beyond the hero.
+ * landing route, so the starfield and nebulae are visible across every
+ * section as the user scrolls — Falcon's "operating in space" brand
+ * language carried beyond the hero.
  *
  * Layered (back → front):
  *   1. Pure black canvas
  *   2. Distant star layers (parallax drift)
- *   3. Two soft nebula gas clouds — one warm gold (brand) and one cool indigo
- *   4. Shooting stars (sporadic streaks)
- *   5. Subtle grain (mix-blend screen)
+ *   3. Soft nebula gas clouds at different scroll depths
+ *   4. Subtle grain (mix-blend screen)
  */
 export function CosmicBackdrop() {
   return (
@@ -81,9 +79,6 @@ export function CosmicBackdrop() {
 
       {/* Stars — three drift layers covering the full backdrop */}
       <StarField density={520} />
-
-      {/* Shooting streaks — sporadic, only triggers a couple per minute */}
-      <ShootingStars count={10} />
 
       {/* Subtle grain on top (so monochromatic gradients don't band on cheap displays) */}
       <div className="cosmic-grain" />
