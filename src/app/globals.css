@@ -244,3 +244,79 @@ input[type="number"] { -moz-appearance: textfield; }
   letter-spacing: 0.32em;
 }
 
+/* ---------- Shooting stars ---------- */
+@keyframes shootingStar {
+  /* Long quiet phase, then a brief streak that fades in/out */
+  0%, 92% { opacity: 0; transform: translate3d(0, 0, 0) rotate(var(--ss-angle, 22deg)) scaleX(0); }
+  93%     { opacity: 0; transform: translate3d(0, 0, 0) rotate(var(--ss-angle, 22deg)) scaleX(0); }
+  94%     { opacity: 1; transform: translate3d(0, 0, 0) rotate(var(--ss-angle, 22deg)) scaleX(1); }
+  98%     { opacity: 1; transform: translate3d(var(--ss-distance, 80vw), var(--ss-distance, 80vw), 0) rotate(var(--ss-angle, 22deg)) scaleX(1); }
+  100%    { opacity: 0; transform: translate3d(var(--ss-distance, 80vw), var(--ss-distance, 80vw), 0) rotate(var(--ss-angle, 22deg)) scaleX(0); }
+}
+
+.shooting-star {
+  position: absolute;
+  width: 180px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 240, 220, 0.95) 50%,
+    rgba(255, 220, 190, 1) 92%,
+    rgba(255, 200, 160, 1) 100%);
+  box-shadow:
+    0 0 8px rgba(255, 240, 220, 0.6),
+    0 0 16px rgba(255, 220, 180, 0.4);
+  transform-origin: 100% 50%; /* head of the streak */
+  will-change: transform, opacity;
+  pointer-events: none;
+  animation-name: shootingStar;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+  opacity: 0;
+}
+
+/* ---------- Cosmic backdrop helpers ---------- */
+.nebula {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+@keyframes nebulaBreathe {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.5; }
+  50%      { transform: translate3d(0, -30px, 0) scale(1.08); opacity: 0.7; }
+}
+
+.nebula-anim { animation: nebulaBreathe 26s ease-in-out infinite; }
+
+/* ---------- Reveal-on-scroll ---------- */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translate3d(0, 36px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.reveal-init { opacity: 0; transform: translate3d(0, 36px, 0); }
+.reveal-in   { animation: reveal-up 1100ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Section divider — soft, more airy than the gold rule for inter-section flow */
+.celestial-rule {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+}
+.celestial-rule::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: rgba(240, 193, 75, 0.7);
+  box-shadow: 0 0 12px rgba(240, 193, 75, 0.6);
+}
+

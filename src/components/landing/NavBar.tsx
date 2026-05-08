@@ -30,7 +30,7 @@ export function NavBar() {
         <Link href="/" className="flex items-center">
           <Logo size="sm" />
         </Link>
-        <div className="hidden md:flex items-center gap-8 ml-12 text-[12.5px] font-medium tracking-wider uppercase text-white/60">
+        <div className="hidden md:flex items-center gap-9 ml-14 text-[12.5px] font-medium tracking-[0.18em] uppercase text-white/75">
           <a href="#product" className="hover:text-white transition-colors">Product</a>
           <a href="#features" className="hover:text-white transition-colors">Features</a>
           <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
@@ -48,7 +48,7 @@ export function NavBar() {
             <>
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center text-[12.5px] font-medium tracking-wider uppercase text-white/70 hover:text-white px-3 h-9"
+                className="hidden sm:inline-flex items-center text-[12.5px] font-medium tracking-[0.18em] uppercase text-white/85 hover:text-white px-3 h-9"
               >
                 Sign In
               </Link>
