@@ -320,3 +320,25 @@ input[type="number"] { -moz-appearance: textfield; }
   box-shadow: 0 0 12px rgba(240, 193, 75, 0.6);
 }
 
+/* ---------- Aurora curtain (Manifesto section) ---------- */
+@keyframes auroraDrift {
+  0%, 100% { opacity: 0.12; transform: translateY(0) scaleY(1); }
+  50%      { opacity: 0.35; transform: translateY(-14px) scaleY(1.06); }
+}
+.aurora-curtain {
+  position: absolute;
+  top: -10%;
+  width: 90px;
+  height: 70%;
+  border-radius: 50%;
+  filter: blur(36px);
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(180, 110, 220, 0.55) 0%,
+    rgba(120, 90, 220, 0.32) 35%,
+    rgba(80, 200, 220, 0.22) 65%,
+    rgba(0, 0, 0, 0) 100%);
+  animation: auroraDrift 9s ease-in-out infinite;
+  opacity: 0.18;
+}
+
