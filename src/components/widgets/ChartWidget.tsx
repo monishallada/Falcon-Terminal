@@ -8,22 +8,21 @@ import {
   CandlestickData,
   LineData,
   HistogramData,
-  Time,
   UTCTimestamp
 } from "lightweight-charts";
 import { Panel } from "../ui/Panel";
 import { SymbolPicker } from "../ui/SymbolPicker";
 import { useWorkspace } from "@/store/workspace";
 import { generateBars, fmtPrice, getMarket } from "@/lib/market";
-import { ema, sma, vwap, bollinger, rsi as rsiCalc, macd as macdCalc } from "@/lib/indicators";
+import { ema, sma, vwap, bollinger } from "@/lib/indicators";
 import { Bar, Timeframe } from "@/lib/types";
 import { getInstrument } from "@/lib/instruments";
 import clsx from "clsx";
-import { CandlestickChart, LineChart, BarChart3, Maximize2, Minus, Plus } from "lucide-react";
+import { CandlestickChart, LineChart, BarChart3, Maximize2 } from "lucide-react";
 
 type ChartKind = "candle" | "line" | "area";
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1D", "1W"];
-const INDICATOR_OPTIONS = ["EMA20", "EMA50", "EMA200", "SMA200", "VWAP", "Bollinger", "RSI", "MACD"];
+const INDICATOR_OPTIONS = ["EMA20", "EMA50", "EMA200", "SMA200", "VWAP", "Bollinger"];
 
 export function ChartWidget({ panelId }: { panelId: string }) {
   const ws = useWorkspace((s) => s.active());
@@ -35,7 +34,10 @@ export function ChartWidget({ panelId }: { panelId: string }) {
   const panel = ws.panels[panelId];
   const symbol = (panel?.config.symbol as string) ?? "AAPL";
   const tf = (panel?.config.timeframe as Timeframe) ?? "5m";
-  const inds = useMemo<string[]>(() => (panel?.config.indicators as string[]) ?? ["EMA20", "EMA50", "VWAP"], [panel?.config.indicators]);
+  const inds = useMemo<string[]>(
+    () => (panel?.config.indicators as string[]) ?? ["EMA20", "EMA50", "VWAP"],
+    [panel?.config.indicators]
+  );
   const kind = (panel?.config.kind as ChartKind) ?? "candle";
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,21 +46,34 @@ export function ChartWidget({ panelId }: { panelId: string }) {
   const lineRef = useRef<ISeriesApi<"Line"> | null>(null);
   const areaRef = useRef<ISeriesApi<"Area"> | null>(null);
   const volRef = useRef<ISeriesApi<"Histogram"> | null>(null);
-  const indSeriesRef = useRef<Record<string, ISeriesApi<"Line"> | ISeriesApi<"Area">>>({});
-  const subRef = useRef<{ tf: Timeframe; bars: Bar[]; lastBarTime: number }>({ tf, bars: [], lastBarTime: 0 });
+  const indSeriesRef = useRef<Record<string, ISeriesApi<"Line">>>({});
+  const stateRef = useRef<{ symbol: string; tf: Timeframe; bars: Bar[] }>({
+    symbol: "",
+    tf: "5m",
+    bars: []
+  });
+  const [, forceTick] = useState(0); // re-render to refresh OHLC readout
 
   // Build chart once
   useEffect(() => {
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
-      layout: { background: { color: "#0b0f16" }, textColor: "#9aa3b2", fontSize: 11, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" },
-      grid: { vertLines: { color: "rgba(255,255,255,0.03)" }, horzLines: { color: "rgba(255,255,255,0.03)" } },
+      layout: {
+        background: { color: "#0b0f16" },
+        textColor: "#9aa3b2",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"
+      },
+      grid: {
+        vertLines: { color: "rgba(255,255,255,0.03)" },
+        horzLines: { color: "rgba(255,255,255,0.03)" }
+      },
       rightPriceScale: { borderColor: "#161c28" },
       timeScale: { borderColor: "#161c28", timeVisible: true, secondsVisible: false },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: "rgba(255,176,32,0.4)", width: 1 as 1, style: 0, labelBackgroundColor: "#ffb020" },
-        horzLine: { color: "rgba(255,176,32,0.4)", width: 1 as 1, style: 0, labelBackgroundColor: "#ffb020" }
+        vertLine: { color: "rgba(255,176,32,0.4)", width: 1, style: 0, labelBackgroundColor: "#ffb020" },
+        horzLine: { color: "rgba(255,176,32,0.4)", width: 1, style: 0, labelBackgroundColor: "#ffb020" }
       },
       autoSize: true
     });
@@ -74,21 +89,36 @@ export function ChartWidget({ panelId }: { panelId: string }) {
     };
   }, []);
 
-  // (Re)build series when symbol, timeframe, kind, or indicators change
+  /**
+   * One unified effect for symbol / timeframe / kind / indicators changes:
+   *  1) tear down previous series
+   *  2) generate fresh bars and create new series
+   *  3) subscribe to live ticks for the current symbol
+   *  4) return a cleanup that BOTH removes the subscription AND tears the series
+   *
+   * Putting all of this in one effect (rather than splitting into two) was the
+   * root cause of the "chart doesn't update when I change symbol" bug — under
+   * specific React effect-ordering scenarios the live-tick subscription could
+   * end up bound to a series ref that was about to be replaced by a parallel
+   * effect. With one effect, the closure always sees the latest series.
+   */
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart) return;
 
-    // tear old series
+    // ---- 1) Tear down any previous series ----
     if (candleRef.current) { chart.removeSeries(candleRef.current); candleRef.current = null; }
     if (lineRef.current) { chart.removeSeries(lineRef.current); lineRef.current = null; }
     if (areaRef.current) { chart.removeSeries(areaRef.current); areaRef.current = null; }
     if (volRef.current) { chart.removeSeries(volRef.current); volRef.current = null; }
-    Object.values(indSeriesRef.current).forEach((s) => chart.removeSeries(s));
+    Object.values(indSeriesRef.current).forEach((s) => {
+      try { chart.removeSeries(s); } catch { /* already removed */ }
+    });
     indSeriesRef.current = {};
 
+    // ---- 2) Generate new bars + series ----
     const bars = generateBars(symbol, tf, 600);
-    subRef.current = { tf, bars, lastBarTime: bars[bars.length - 1]?.time ?? 0 };
+    stateRef.current = { symbol, tf, bars };
 
     if (kind === "candle") {
       const s = chart.addCandlestickSeries({
@@ -97,7 +127,12 @@ export function ChartWidget({ panelId }: { panelId: string }) {
         wickUpColor: "#16c784", wickDownColor: "#ea3943",
         priceLineColor: "#ffb020"
       });
-      s.setData(bars.map((b) => ({ time: b.time as UTCTimestamp, open: b.open, high: b.high, low: b.low, close: b.close })) as CandlestickData[]);
+      s.setData(
+        bars.map((b) => ({
+          time: b.time as UTCTimestamp,
+          open: b.open, high: b.high, low: b.low, close: b.close
+        })) as CandlestickData[]
+      );
       candleRef.current = s;
     } else if (kind === "line") {
       const s = chart.addLineSeries({ color: "#ffb020", lineWidth: 2, priceLineColor: "#ffb020" });
@@ -114,7 +149,6 @@ export function ChartWidget({ panelId }: { panelId: string }) {
       areaRef.current = s;
     }
 
-    // Volume histogram on its own scale
     const vol = chart.addHistogramSeries({
       priceFormat: { type: "volume" },
       priceScaleId: "vol",
@@ -167,21 +201,24 @@ export function ChartWidget({ panelId }: { panelId: string }) {
     });
 
     chart.timeScale().fitContent();
-  }, [symbol, tf, kind, inds]);
 
-  // Live tick update — append to current bar or roll new
-  useEffect(() => {
-    const m = getMarket();
-    const off = m.subscribe(symbol, (q) => {
-      const sub = subRef.current;
-      const tfSec = tfSeconds(sub.tf);
+    // ---- 3) Subscribe to live ticks for THIS symbol ----
+    const market = getMarket();
+    const tfSec = tfSeconds(tf);
+    const off = market.subscribe(symbol, (q) => {
+      // The closure is bound to `symbol` — but we also defensively check that
+      // stateRef still matches before mutating, so any in-flight callback from
+      // a prior subscription (extremely rare) is a no-op.
+      if (stateRef.current.symbol !== symbol) return;
+
       const nowSec = Math.floor(q.ts / 1000);
       const boundary = nowSec - (nowSec % tfSec);
-      const bars = sub.bars;
-      const last = bars[bars.length - 1];
+      const arr = stateRef.current.bars;
+      const last = arr[arr.length - 1];
       if (!last) return;
+
+      let updated: Bar;
       if (boundary > last.time) {
-        // New bar
         const newBar: Bar = {
           time: boundary,
           open: q.price,
@@ -190,27 +227,49 @@ export function ChartWidget({ panelId }: { panelId: string }) {
           close: q.price,
           volume: 0
         };
-        bars.push(newBar);
-        if (bars.length > 800) bars.shift();
+        arr.push(newBar);
+        if (arr.length > 800) arr.shift();
+        updated = newBar;
       } else {
         last.high = Math.max(last.high, q.price);
         last.low = Math.min(last.low, q.price);
         last.close = q.price;
-        last.volume += 1; // roughly approximated
+        last.volume += 1;
+        updated = last;
       }
-      const updated = bars[bars.length - 1];
 
-      if (candleRef.current) candleRef.current.update({ time: updated.time as UTCTimestamp, open: updated.open, high: updated.high, low: updated.low, close: updated.close });
-      if (lineRef.current) lineRef.current.update({ time: updated.time as UTCTimestamp, value: updated.close });
-      if (areaRef.current) areaRef.current.update({ time: updated.time as UTCTimestamp, value: updated.close });
-      if (volRef.current) volRef.current.update({ time: updated.time as UTCTimestamp, value: updated.volume, color: updated.close >= updated.open ? "rgba(22,199,132,0.45)" : "rgba(234,57,67,0.45)" });
+      try {
+        if (candleRef.current) {
+          candleRef.current.update({
+            time: updated.time as UTCTimestamp,
+            open: updated.open, high: updated.high, low: updated.low, close: updated.close
+          });
+        }
+        if (lineRef.current) lineRef.current.update({ time: updated.time as UTCTimestamp, value: updated.close });
+        if (areaRef.current) areaRef.current.update({ time: updated.time as UTCTimestamp, value: updated.close });
+        if (volRef.current) {
+          volRef.current.update({
+            time: updated.time as UTCTimestamp,
+            value: updated.volume,
+            color: updated.close >= updated.open ? "rgba(22,199,132,0.45)" : "rgba(234,57,67,0.45)"
+          });
+        }
+      } catch {
+        // The series may have been torn down between event firing and update;
+        // safe to swallow because the new effect will re-bind shortly.
+      }
+
+      // throttled re-render for the OHLC readout in the toolbar
+      forceTick((n) => (n + 1) & 0xffff);
     });
-    return off;
-  }, [symbol]);
+
+    return () => {
+      off();
+    };
+  }, [symbol, tf, kind, inds]);
 
   const inst = getInstrument(symbol);
-  const lastBar = subRef.current.bars[subRef.current.bars.length - 1];
-  const [paneFs, setPaneFs] = useState(false);
+  const lastBar = stateRef.current.bars[stateRef.current.bars.length - 1];
 
   return (
     <Panel
@@ -220,13 +279,6 @@ export function ChartWidget({ panelId }: { panelId: string }) {
       onSetGroup={(c) => setGroup(panelId, c)}
       onClose={() => removePanel(panelId)}
       bodyClassName="flex flex-col"
-      rightAdornment={
-        <>
-          <button title="Fullscreen" onMouseDown={(e) => e.stopPropagation()} onClick={() => setPaneFs((v) => !v)} className="p-1 rounded hover:bg-bg-3 text-ink-mute hover:text-ink">
-            <Maximize2 size={11} />
-          </button>
-        </>
-      }
     >
       {/* Toolbar */}
       <div className="h-9 px-2 flex items-center gap-2 border-b border-line-soft bg-bg-2/40 shrink-0">
@@ -268,10 +320,13 @@ export function ChartWidget({ panelId }: { panelId: string }) {
             </button>
           ))}
         </div>
-        <IndicatorMenu inds={inds} onToggle={(tag) => {
-          const next = inds.includes(tag) ? inds.filter((x) => x !== tag) : [...inds, tag];
-          updatePanel(panelId, { config: { indicators: next } });
-        }} />
+        <IndicatorMenu
+          inds={inds}
+          onToggle={(tag) => {
+            const next = inds.includes(tag) ? inds.filter((x) => x !== tag) : [...inds, tag];
+            updatePanel(panelId, { config: { indicators: next } });
+          }}
+        />
         {lastBar && (
           <div className="ml-auto flex items-center gap-2 text-[10.5px] font-mono text-ink-dim">
             <span>O <span className="text-ink">{fmtPrice(lastBar.open, inst?.asset)}</span></span>

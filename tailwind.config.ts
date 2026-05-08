@@ -23,7 +23,9 @@ const config: Config = {
         },
         falcon: {
           amber: "#ffb020",
-          gold: "#f0a500",
+          gold: "#f0c14b",       // brand gold from the FALCON wordmark
+          goldSoft: "#e3b034",
+          goldDeep: "#c98f1e",
           orange: "#ff7a1a",
           ember: "#ff5722"
         },
@@ -43,7 +45,9 @@ const config: Config = {
       },
       fontFamily: {
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
+        sans: ["var(--font-sans)", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Outfit", "ui-sans-serif", "system-ui", "sans-serif"],
+        "display-mono": ["var(--font-display-mono)", "Space Mono", "ui-monospace", "Menlo", "monospace"]
       },
       fontSize: {
         "2xs": ["10px", "12px"],

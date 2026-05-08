@@ -21,6 +21,7 @@ import {
 import clsx from "clsx";
 import { WIDGET_CATALOG } from "./widgets";
 import { GroupDot } from "./ui/GroupDot";
+import { UserMenu } from "./auth/UserMenu";
 
 export function TopBar() {
   const workspaces = useWorkspace((s) => s.workspaces);
@@ -182,6 +183,7 @@ export function TopBar() {
         >
           <Command size={12} />
         </button>
+        <UserMenu />
       </div>
     </header>
   );
