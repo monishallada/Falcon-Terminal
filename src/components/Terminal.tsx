@@ -13,10 +13,9 @@ export function Terminal() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    // Force-hydrate Zustand persist before rendering the grid (avoid layout flash)
-    useWorkspace.persist?.rehydrate?.();
+    // Workspace persist hydration is handled by the AuthGate (which knows the
+    // active user's namespaced key). Just boot the data engines here.
     setHydrated(true);
-    // Boot data engines on the client only
     getMarket();
     getNewsStream().start();
     return () => getNewsStream().stop();

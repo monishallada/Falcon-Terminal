@@ -1,26 +1,53 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Panel } from "../ui/Panel";
 import { useWorkspace } from "@/store/workspace";
 import { Sparkles, Send, RotateCcw } from "lucide-react";
 import { ChatMessage } from "@/lib/types";
 import { answerStream, newChat } from "@/lib/ai";
 import { useLocalState } from "@/lib/hooks";
-
-const SUGGESTIONS = [
-  "Summarize NVDA's last earnings call",
-  "Why is TSLA moving today?",
-  "Compare GOOGL and MSFT revenue growth",
-  "Find quality names with P/E under 25",
-  "What's the macro picture this week?",
-  "Build a short thesis on PLTR"
-];
+import { getInstrument } from "@/lib/instruments";
 
 export function AIChatWidget({ panelId }: { panelId: string }) {
   const ws = useWorkspace((s) => s.active());
   const setGroup = useWorkspace((s) => s.setPanelGroup);
   const removePanel = useWorkspace((s) => s.removePanel);
+  const preferredSymbol = useWorkspace((s) => s.preferredSymbol);
   const panel = ws.panels[panelId];
+
+  /**
+   * Symbol-aware context. If the AI panel is linked to a color group, we pick
+   * up the active symbol from any other panel in that group (the chart, the
+   * watchlist, etc. write the active symbol back into the group). If the panel
+   * is unlinked, fall back to the user's preferred symbol. This is what was
+   * missing before — the AI chat was effectively ignoring whatever the rest of
+   * the workspace was looking at.
+   */
+  const contextSymbol = useMemo(() => {
+    if (!panel) return preferredSymbol;
+    if (panel.group) {
+      // Find any sibling in the same group with a config.symbol set
+      const sibling = Object.values(ws.panels).find(
+        (p) => p.i !== panel.i && p.group === panel.group && typeof p.config.symbol === "string"
+      );
+      if (sibling) return sibling.config.symbol as string;
+    }
+    return (panel.config.symbol as string) ?? preferredSymbol;
+  }, [panel, ws.panels, preferredSymbol]);
+
+  const inst = getInstrument(contextSymbol ?? "");
+
+  const SUGGESTIONS = useMemo(() => {
+    const sym = contextSymbol || "NVDA";
+    return [
+      `Summarize ${sym}'s last earnings call`,
+      `Why is ${sym} moving today?`,
+      `Build a thesis on ${sym}`,
+      `Compare ${sym} and SPY performance`,
+      "Find quality names with P/E under 25",
+      "What's the macro picture this week?"
+    ];
+  }, [contextSymbol]);
 
   const [messages, setMessages] = useLocalState<ChatMessage[]>(`falcon.ai.chat.${panelId}`, [
     newChat("system", "Falcon AI Research — synthesizes responses using live market data, filings, and your portfolio context.")
@@ -38,13 +65,19 @@ export function AIChatWidget({ panelId }: { panelId: string }) {
   function send(qOverride?: string) {
     const q = (qOverride ?? input).trim();
     if (!q || streaming) return;
+    // If the user didn't mention any explicit ticker but a context symbol is
+    // active, prepend it so the router routes correctly (e.g. earnings →
+    // earnings_summary for the focused symbol).
+    const hasTicker = /\b[A-Z]{1,5}\b/.test(q);
+    const augmented = !hasTicker && contextSymbol ? `${q} (context: ${contextSymbol})` : q;
+
     const userMsg = newChat("user", q);
     const assistantId = newChat("assistant", "").id;
     const assistantMsg: ChatMessage = { id: assistantId, role: "assistant", content: "", ts: Date.now(), streaming: true };
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
     setInput("");
     setStreaming(true);
-    const gen = answerStream(q);
+    const gen = answerStream(augmented);
     let acc = "";
     function step() {
       const { value, done } = gen.next();
@@ -112,6 +145,15 @@ export function AIChatWidget({ panelId }: { panelId: string }) {
           )}
         </div>
         <div className="p-2 border-t border-line-soft bg-bg-2/40">
+          {contextSymbol && (
+            <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-mono uppercase tracking-wider">
+              <span className="text-ink-mute">Context</span>
+              <span className="px-1.5 py-px rounded bg-falcon-amber/15 text-falcon-amber border border-falcon-amber/30">
+                ${contextSymbol}
+              </span>
+              {inst?.name && <span className="text-ink-mute truncate">{inst.name}</span>}
+            </div>
+          )}
           <div className="flex items-end gap-2">
             <textarea
               value={input}
@@ -124,7 +166,7 @@ export function AIChatWidget({ panelId }: { panelId: string }) {
                 }
               }}
               rows={1}
-              placeholder="Ask Falcon AI…"
+              placeholder={contextSymbol ? `Ask Falcon AI about $${contextSymbol}…` : "Ask Falcon AI…"}
               className="flex-1 resize-none bg-bg-3/40 border border-line-soft hover:border-line focus:border-falcon-amber rounded px-2 py-1.5 text-[12px] font-mono leading-snug max-h-32"
             />
             <button

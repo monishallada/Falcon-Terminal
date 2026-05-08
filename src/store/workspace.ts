@@ -11,6 +11,7 @@ import {
   WidgetType,
   Workspace
 } from "@/lib/types";
+import { activeUserId } from "./auth";
 
 interface UIState {
   commandOpen: boolean;
@@ -332,7 +333,11 @@ export const useWorkspace = create<WorkspaceStore>()(
       }
     }),
     {
-      name: "falcon-terminal-v1",
+      // Per-user namespacing — the persist key includes the active user id, so
+      // workspaces, watchlists, portfolios, and alerts are isolated per account.
+      // For guests (pre-auth), data goes into a single "guest" bucket and is
+      // discarded on first sign-in (see migrateGuestDataToUser).
+      name: workspaceStorageKey(activeUserId()),
       storage: createJSONStorage(() => (typeof window === "undefined" ? (undefined as unknown as Storage) : localStorage)),
       partialize: (s) => ({
         workspaces: s.workspaces,
@@ -345,3 +350,62 @@ export const useWorkspace = create<WorkspaceStore>()(
     }
   )
 );
+
+// ---------- Per-user namespacing helpers ----------
+
+export function workspaceStorageKey(userId: string | null): string {
+  return userId ? `falcon-workspace-v1::${userId}` : "falcon-workspace-v1::guest";
+}
+
+/**
+ * Switch the workspace store to the given user's namespaced storage. If the
+ * user has no stored state yet, the three default templates are seeded.
+ *
+ * Order matters: we change the persist `name` BEFORE any setState, so the
+ * seed write lands in the correct namespace.
+ */
+export async function loadUserWorkspace(userId: string | null) {
+  if (typeof window === "undefined") return;
+  const persistApi = (useWorkspace as unknown as {
+    persist?: {
+      setOptions: (o: { name: string }) => void;
+      rehydrate: () => Promise<unknown> | void;
+      clearStorage: () => void;
+    };
+  }).persist;
+  if (!persistApi) return;
+  const key = workspaceStorageKey(userId);
+
+  // 1) Point persist at this user's key
+  persistApi.setOptions({ name: key });
+
+  // 2) If anything is already stored under that key, hydrate from it
+  const stored = window.localStorage.getItem(key);
+  if (stored) {
+    await persistApi.rehydrate();
+    return;
+  }
+
+  // 3) Otherwise seed defaults — this setState will be persisted to the new key
+  const fresh: Workspace[] = [
+    blankWorkspace("Trader", "trader"),
+    blankWorkspace("Research", "research"),
+    blankWorkspace("Macro", "macro")
+  ];
+  useWorkspace.setState({
+    workspaces: fresh,
+    activeId: fresh[0].id,
+    watchlist: ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AMD", "AVGO", "PLTR", "SPY", "QQQ", "BTC", "ETH", "SOL"],
+    positions: [
+      { symbol: "AAPL", shares: 50,  avgCost: 178.40, purchaseDate: "2024-03-12" },
+      { symbol: "MSFT", shares: 30,  avgCost: 360.10, purchaseDate: "2024-04-22" },
+      { symbol: "NVDA", shares: 100, avgCost: 92.50,  purchaseDate: "2024-05-04" },
+      { symbol: "META", shares: 25,  avgCost: 480.00, purchaseDate: "2024-08-15" },
+      { symbol: "AMZN", shares: 40,  avgCost: 165.30, purchaseDate: "2024-06-10" },
+      { symbol: "SPY",  shares: 60,  avgCost: 540.00, purchaseDate: "2024-07-21" }
+    ],
+    alerts: [],
+    preferredSymbol: "NVDA"
+  });
+}
+
