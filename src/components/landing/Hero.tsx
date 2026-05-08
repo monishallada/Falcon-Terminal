@@ -1,10 +1,16 @@
 "use client";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { StarField } from "./StarField";
-import { EarthGlow } from "./EarthGlow";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/store/auth";
 import { useEffect, useState } from "react";
+
+// Canvas-based Earth — heavy first paint, so client-only and code-split.
+const EarthGlobe = dynamic(() => import("./EarthGlobe"), {
+  ssr: false,
+  loading: () => null
+});
 
 export function Hero() {
   const acct = useAuth((s) => s.currentUserId);
@@ -18,7 +24,14 @@ export function Hero() {
       <div className="absolute inset-0 bg-gradient-to-b from-black via-[#02030a] to-black" />
       <StarField density={420} />
       <div className="cosmic-grain" />
-      <EarthGlow />
+      {/* Real rotating 3D Earth — pinned to the bottom, peeks up exactly like
+          the brand banner. The container occupies the lower 60% of the hero;
+          the sphere center sits just below the bottom edge so only the upper
+          arc of the planet is visible. The atmospheric rim shader inside the
+          component provides the cyan transition into the void. */}
+      <div className="absolute left-0 right-0 bottom-0 h-[60svh] sm:h-[58svh] pointer-events-none">
+        <EarthGlobe />
+      </div>
 
       {/* Faint top ornament — mirrors the small "FALCON" cap in the banner */}
       <div className="relative z-10 mb-8 spaced-display text-[10px] sm:text-[11px] text-falcon-gold/70 uppercase">
