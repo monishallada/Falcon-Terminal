@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "react-grid-layout/css/styles.css";
+@import "react-resizable/css/styles.css";
+
+:root {
+  color-scheme: dark;
+  --rgl-handle: rgba(255, 176, 32, 0.55);
+}
+
+html,
+body,
+#__next {
+  background: #06080c;
+  color: #e5e9f0;
+  font-feature-settings: "tnum" 1, "cv05" 1;
+}
+
+::selection {
+  background: rgba(255, 176, 32, 0.35);
+  color: #fff;
+}
+
+/* Scrollbar — minimal, terminal-grade */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #2a3344; background-clip: padding-box; border: 2px solid transparent; }
+
+/* React-grid-layout overrides */
+.react-grid-item.react-grid-placeholder {
+  background: rgba(255, 176, 32, 0.12) !important;
+  border: 1px dashed rgba(255, 176, 32, 0.55) !important;
+  border-radius: 6px !important;
+  opacity: 1 !important;
+}
+
+.react-grid-item > .react-resizable-handle {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.react-grid-item:hover > .react-resizable-handle { opacity: 1; }
+
+.react-grid-item > .react-resizable-handle::after {
+  border-right-color: var(--rgl-handle) !important;
+  border-bottom-color: var(--rgl-handle) !important;
+}
+
+.react-grid-item.dragging {
+  z-index: 50 !important;
+  cursor: grabbing !important;
+}
+
+/* Subtle grid dots backdrop */
+.bg-dotgrid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* Numeric flash — bull and bear */
+@keyframes flash-up {
+  0% { background-color: rgba(22, 199, 132, 0.35); }
+  100% { background-color: transparent; }
+}
+@keyframes flash-down {
+  0% { background-color: rgba(234, 57, 67, 0.35); }
+  100% { background-color: transparent; }
+}
+.flash-up { animation: flash-up 600ms ease-out; }
+.flash-down { animation: flash-down 600ms ease-out; }
+
+/* Inline marquee tape */
+.tape-track { display: flex; width: max-content; animation: tape 90s linear infinite; }
+.tape-track:hover { animation-play-state: paused; }
+
+/* Drag handle on panel header */
+.panel-drag {
+  cursor: grab;
+  user-select: none;
+}
+.panel-drag:active { cursor: grabbing; }
+
+/* Tiny sparkline path glow */
+.spark-up { stroke: #16c784; }
+.spark-down { stroke: #ea3943; }
+
+/* Focus ring — amber */
+button:focus-visible,
+input:focus-visible,
+[role="button"]:focus-visible {
+  outline: 1px solid #ffb020;
+  outline-offset: 1px;
+}
+
+/* Hide native number input arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Loading shimmer */
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.shimmer {
+  background: linear-gradient(90deg, #10151f 0px, #1d2531 200px, #10151f 400px);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s linear infinite;
+}
