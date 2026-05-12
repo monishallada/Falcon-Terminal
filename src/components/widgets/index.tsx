@@ -1,6 +1,8 @@
 "use client";
 import { WidgetType } from "@/lib/types";
 import { ChartWidget } from "./ChartWidget";
+import { MultiChartWidget } from "./MultiChartWidget";
+import { AISignalsWidget } from "./AISignalsWidget";
 import { WatchlistWidget } from "./WatchlistWidget";
 import { QuoteWidget } from "./QuoteWidget";
 import { TimeAndSalesWidget } from "./TimeAndSalesWidget";
@@ -32,12 +34,16 @@ import {
   Globe,
   LayoutGrid,
   CalendarDays,
-  StickyNote
+  StickyNote,
+  Grid3x3,
+  Brain
 } from "lucide-react";
 
 export function renderWidget(type: WidgetType, panelId: string) {
   switch (type) {
     case "chart": return <ChartWidget panelId={panelId} />;
+    case "multi_chart": return <MultiChartWidget panelId={panelId} />;
+    case "ai_signals": return <AISignalsWidget panelId={panelId} />;
     case "watchlist": return <WatchlistWidget panelId={panelId} />;
     case "quote": return <QuoteWidget panelId={panelId} />;
     case "time_sales": return <TimeAndSalesWidget panelId={panelId} />;
@@ -59,7 +65,9 @@ export function renderWidget(type: WidgetType, panelId: string) {
 
 type IconType = React.ComponentType<{ size?: number | string; className?: string }>;
 export const WIDGET_CATALOG: { type: WidgetType; name: string; description: string; icon: IconType }[] = [
-  { type: "chart",        name: "Chart",          icon: CandlestickChart, description: "Candles, indicators, drawing tools." },
+  { type: "chart",        name: "Chart",          icon: CandlestickChart, description: "Candles, HA, hollow, baseline · 11 indicators · oscillator pane · comparison overlay." },
+  { type: "multi_chart",  name: "Multi-Chart",    icon: Grid3x3,          description: "2×2 grid of live charts, independent symbol/timeframe per pane." },
+  { type: "ai_signals",   name: "AI Signals",     icon: Brain,            description: "Composite 0-100 score, regime, ATR trade plan, AI reasoning." },
   { type: "watchlist",    name: "Watchlist",      icon: Eye,              description: "Sortable list with live ticks and sparklines." },
   { type: "quote",        name: "Quote",          icon: Activity,         description: "Single-symbol detail card." },
   { type: "time_sales",   name: "Time & Sales",   icon: List,             description: "Live print-by-print tape for one symbol." },
