@@ -20,22 +20,29 @@ import {
  */
 export function TerminalPreview() {
   return (
-    <section className="relative py-24 sm:py-32">
+    <section className="relative pt-6 pb-20 sm:pb-24">
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
-        <Reveal className="text-center mb-14">
-          <div className="spaced-display text-[10.5px] uppercase tracking-[0.4em] text-falcon-gold mb-5">
-            One workspace · sixteen widgets
+        <Reveal className="mb-8">
+          <div className="flex items-end justify-between flex-wrap gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="block w-8 h-px bg-falcon-gold/70" />
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.32em] text-falcon-gold">
+                  The workspace
+                </span>
+              </div>
+              <h2
+                className="font-display font-medium text-white tracking-[-0.015em] leading-[1.05] max-w-3xl"
+                style={{ fontSize: "clamp(28px, 4vw, 48px)" }}
+              >
+                Your research stack, in one window.
+              </h2>
+            </div>
+            <p className="text-white/65 text-[13.5px] max-w-md leading-[1.6]">
+              Drag any panel anywhere. Link them by color. Save the layout.
+              Open it on any machine — it&apos;s yours.
+            </p>
           </div>
-          <h2
-            className="font-display font-medium text-white tracking-[-0.015em] leading-[1.05] mx-auto max-w-4xl"
-            style={{ fontSize: "clamp(34px, 5vw, 64px)" }}
-          >
-            Your entire research stack, in one window.
-          </h2>
-          <p className="mt-6 text-white/85 max-w-2xl mx-auto text-[15.5px] sm:text-[17px] leading-[1.65] font-light">
-            Charts. Filings. Sentiment. Options flow. Portfolio. Drag any panel anywhere.
-            Link them by color. Save the layout. Open anywhere — it&apos;s yours.
-          </p>
         </Reveal>
 
         <Reveal>

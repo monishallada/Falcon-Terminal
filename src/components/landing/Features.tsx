@@ -21,69 +21,101 @@ import { Reveal } from "./Reveal";
 
 type IconType = React.ComponentType<{ size?: number | string; className?: string }>;
 
-const PILLARS: { title: string; body: string; icon: IconType }[] = [
+interface Widget {
+  name: string;
+  description: string;
+  icon: IconType;
+}
+
+interface Category {
+  name: string;
+  widgets: Widget[];
+}
+
+const CATEGORIES: Category[] = [
   {
-    title: "Modular workspace",
-    body:
-      "Drag, resize, and link panels into named workspaces that persist across sessions. An OS for investing — every chart, news feed, and AI chat is a window inside it.",
-    icon: LayoutGrid
+    name: "Price & flow",
+    widgets: [
+      { name: "Charting",      description: "Candle, line, area · 8 timeframes · EMA, VWAP, BB, MACD",  icon: CandlestickChart },
+      { name: "Level II",      description: "Order book depth, grouped by market maker",                icon: Layers },
+      { name: "Time & Sales",  description: "Print-by-print tape with aggressor-side coloring",         icon: List },
+      { name: "Options Flow",  description: "Unusual prints, sweeps, gamma, put/call ratios",           icon: Zap },
+      { name: "Tape",          description: "Cross-asset scrolling ticker — your situational radar",    icon: Tv2 },
+      { name: "Quote",         description: "One-symbol detail — bid, ask, range, fundamentals",        icon: Activity }
+    ]
   },
   {
-    title: "Real-time, sub-500ms",
-    body:
-      "A pub-sub fan-out engine streams live ticks for equities, ETFs, crypto, FX, commodities, indices, and treasuries — all in a single workspace.",
-    icon: Zap
+    name: "Research & signal",
+    widgets: [
+      { name: "AI Research",   description: "Streaming, citation-aware answers grounded in live data",  icon: Sparkles },
+      { name: "News",          description: "Wires, filings, macro releases — sentiment-scored",        icon: Newspaper },
+      { name: "Sentiment",     description: "Reddit, X, Stocktwits — mention velocity & bull/bear",     icon: MessageCircle },
+      { name: "Calendar",      description: "Earnings + macro releases with prior and consensus",       icon: CalendarDays },
+      { name: "Screener",      description: "Filter and rank the universe in milliseconds",             icon: Filter }
+    ]
   },
   {
-    title: "AI-native research",
-    body:
-      "A streaming research engine that synthesizes filings, transcripts, and live data into one answer. Earnings, intraday, comparisons, screens, macro — ask in plain English.",
-    icon: Sparkles
+    name: "Workspace",
+    widgets: [
+      { name: "Portfolio",     description: "Live P&L, allocation, beta, AI-generated commentary",      icon: Briefcase },
+      { name: "Watchlist",     description: "Sortable lists with sparkline previews and live ticks",    icon: Eye },
+      { name: "Heatmap",       description: "Sector-grouped, market-cap-weighted heat across the tape", icon: LayoutGrid },
+      { name: "Macro",         description: "Indices, FX, rates, commodities, crypto — one view",       icon: Globe },
+      { name: "Notes",         description: "A trade journal embedded in your workspace",               icon: StickyNote }
+    ]
   }
 ];
 
-const WIDGETS: { name: string; description: string; icon: IconType }[] = [
-  { name: "Charting",      description: "Candle / line / area, 8 timeframes, EMA, VWAP, Bollinger, MACD.", icon: CandlestickChart },
-  { name: "AI Research",   description: "Streaming, citation-aware answers grounded in live data.",        icon: Sparkles },
-  { name: "News",          description: "Wires, filings, and macro releases — sentiment-scored.",          icon: Newspaper },
-  { name: "Sentiment",     description: "Social mention velocity, bull/bear gauge, trending tickers.",     icon: MessageCircle },
-  { name: "Options Flow",  description: "Unusual prints, sweeps, gamma exposure, put/call ratios.",        icon: Zap },
-  { name: "Portfolio",     description: "Live P&L, sector allocation, beta, AI-generated commentary.",     icon: Briefcase },
-  { name: "Screener",      description: "Filter and rank the universe in milliseconds, save presets.",     icon: Filter },
-  { name: "Macro",         description: "Indices, FX, rates, commodities, crypto — one global view.",     icon: Globe },
-  { name: "Heatmap",       description: "Sector-grouped, market-cap-weighted heat across the tape.",       icon: LayoutGrid },
-  { name: "Watchlist",     description: "Sortable lists with sparkline previews and live ticks.",          icon: Eye },
-  { name: "Time & Sales",  description: "Print-by-print tape with aggressor side coloring.",               icon: List },
-  { name: "Level II",      description: "Order book depth grouped by market maker.",                       icon: Layers },
-  { name: "Tape",          description: "Cross-asset scrolling ticker — your situational radar.",          icon: Tv2 },
-  { name: "Calendar",      description: "Earnings + macro releases with prior and consensus.",             icon: CalendarDays },
-  { name: "Quote",         description: "One-symbol detail card — bid, ask, range, fundamentals.",         icon: Activity },
-  { name: "Notes",         description: "A trade journal embedded in your workspace.",                     icon: StickyNote }
+const DIFFERENTIATORS = [
+  {
+    title: "One workspace, sixteen tools",
+    body: "Everything lives in linked panels you arrange once and save forever. No switching tabs, no separate accounts."
+  },
+  {
+    title: "Built on what retail actually uses",
+    body: "We pull from Reddit, X, and Stocktwits alongside the filings tape — the alt-data pros pay six figures for, baked in."
+  },
+  {
+    title: "AI that knows your context",
+    body: "Ask in plain English. Falcon AI sees the symbol on your chart, the news in your panel, and the position in your book."
+  },
+  {
+    title: "$0 to start, no enterprise sales call",
+    body: "Sign up, open the terminal, go. The pro tier costs less per month than a single Bloomberg lunch."
+  }
 ];
 
 export function Features() {
   return (
     <>
-      {/* Three pillars */}
-      <section id="product" className="relative py-20 sm:py-28">
+      {/* What sets Falcon apart */}
+      <section id="product" className="relative py-20 sm:py-24">
         <div className="max-w-7xl mx-auto px-6 sm:px-10">
           <Reveal>
-            <SectionLabel>An operating system for investing</SectionLabel>
-            <h2 className="mt-6 font-display font-medium text-white text-[clamp(32px,4.6vw,56px)] leading-[1.05] tracking-[-0.015em] max-w-3xl">
-              The terminal you couldn&apos;t afford,{" "}
-              <span className="text-white/55">reimagined for retail.</span>
+            <div className="flex items-center gap-3 mb-5">
+              <span className="block w-8 h-px bg-falcon-gold/70" />
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.32em] text-falcon-gold">
+                Why Falcon
+              </span>
+            </div>
+            <h2 className="font-display font-medium text-white text-[clamp(28px,4vw,48px)] leading-[1.05] tracking-[-0.015em] max-w-3xl">
+              What sets us apart from everything else on your screen.
             </h2>
           </Reveal>
 
-          <div className="mt-14 grid md:grid-cols-3 gap-5">
-            {PILLARS.map((p, i) => (
-              <Reveal key={p.title} delay={i * 90}>
-                <div className="glass-card rounded-2xl p-7 h-full">
-                  <div className="w-10 h-10 rounded-xl bg-falcon-gold/12 border border-falcon-gold/30 flex items-center justify-center mb-5 shadow-[0_0_30px_-8px_rgba(240,193,75,0.5)]">
-                    <p.icon size={17} className="text-falcon-gold" />
+          <div className="mt-12 grid md:grid-cols-2 gap-3">
+            {DIFFERENTIATORS.map((d, i) => (
+              <Reveal key={d.title} delay={(i % 2) * 70}>
+                <div className="rounded-xl border border-white/8 bg-white/[0.02] hover:border-falcon-gold/30 transition-colors p-6 h-full">
+                  <div className="flex items-baseline gap-3 mb-2">
+                    <span className="font-mono text-[10.5px] text-falcon-gold/85">0{i + 1}</span>
+                    <div className="text-white text-[17px] font-medium tracking-tight">
+                      {d.title}
+                    </div>
                   </div>
-                  <div className="text-white text-[18px] font-medium mb-2 tracking-tight">{p.title}</div>
-                  <div className="text-white/85 text-[14px] leading-[1.65] font-light">{p.body}</div>
+                  <p className="text-white/75 text-[13.5px] leading-[1.65] font-light pl-7">
+                    {d.body}
+                  </p>
                 </div>
               </Reveal>
             ))}
@@ -91,45 +123,54 @@ export function Features() {
         </div>
       </section>
 
-      {/* Widget grid */}
-      <section id="features" className="relative py-20 sm:py-28">
+      {/* 16 widgets, categorized */}
+      <section id="features" className="relative py-20 sm:py-24">
         <div className="max-w-7xl mx-auto px-6 sm:px-10">
           <Reveal>
-            <SectionLabel>16 native widgets</SectionLabel>
-            <h2 className="mt-6 font-display font-medium text-white text-[clamp(28px,4vw,48px)] leading-[1.05] max-w-3xl tracking-[-0.015em]">
-              One workspace.{" "}
-              <span className="text-white/55">Sixteen ways to read the market.</span>
+            <div className="flex items-center gap-3 mb-5">
+              <span className="block w-8 h-px bg-falcon-gold/70" />
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.32em] text-falcon-gold">
+                16 native widgets · 3 categories
+              </span>
+            </div>
+            <h2 className="font-display font-medium text-white text-[clamp(28px,4vw,48px)] leading-[1.05] tracking-[-0.015em] max-w-3xl">
+              Every tool the pros use. Organized like the desk you wish you had.
             </h2>
           </Reveal>
 
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {WIDGETS.map((w, i) => (
-              <Reveal key={w.name} delay={(i % 8) * 50}>
-                <div className="glass-card rounded-xl p-5 h-full">
-                  <div className="flex items-center gap-2 mb-2">
-                    <w.icon size={14} className="text-falcon-gold" />
-                    <div className="text-white text-[14px] font-medium tracking-tight">{w.name}</div>
-                  </div>
-                  <div className="text-white/75 text-[12.5px] leading-[1.6] font-light">
-                    {w.description}
-                  </div>
+          <div className="mt-12 space-y-10">
+            {CATEGORIES.map((cat) => (
+              <div key={cat.name}>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="font-mono text-[10.5px] uppercase tracking-[0.32em] text-white/55">
+                    {cat.name}
+                  </span>
+                  <span className="flex-1 h-px bg-white/8" />
+                  <span className="font-mono text-[10.5px] text-white/40">
+                    {cat.widgets.length}
+                  </span>
                 </div>
-              </Reveal>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                  {cat.widgets.map((w) => (
+                    <div
+                      key={w.name}
+                      className="rounded-lg border border-white/8 bg-white/[0.02] hover:border-falcon-gold/30 hover:bg-white/[0.04] transition-colors p-4"
+                    >
+                      <w.icon size={14} className="text-falcon-gold mb-2.5" />
+                      <div className="text-white text-[13px] font-medium tracking-tight">
+                        {w.name}
+                      </div>
+                      <div className="text-white/60 text-[11px] mt-1 leading-[1.55] font-light">
+                        {w.description}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
     </>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="block w-8 h-px bg-falcon-gold/70" />
-      <span className="spaced-display text-[10.5px] sm:text-[11px] uppercase tracking-[0.4em] text-falcon-gold">
-        {children}
-      </span>
-    </div>
   );
 }
