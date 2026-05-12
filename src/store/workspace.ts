@@ -18,6 +18,9 @@ interface UIState {
   helpOpen: boolean;
   settingsOpen: boolean;
   speed: number;
+  // Global AI Mode — when on, widgets that opt in render AI overlays
+  // (support/resistance lines on chart, AI digests on news, etc.)
+  aiMode: boolean;
 }
 
 interface WorkspaceStore {
@@ -168,7 +171,7 @@ export const useWorkspace = create<WorkspaceStore>()(
       ],
       alerts: [],
       preferredSymbol: "NVDA",
-      ui: { commandOpen: false, helpOpen: false, settingsOpen: false, speed: 1 },
+      ui: { commandOpen: false, helpOpen: false, settingsOpen: false, speed: 1, aiMode: false },
 
       active() {
         const id = get().activeId;

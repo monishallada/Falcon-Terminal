@@ -92,10 +92,12 @@ export interface SocialPost {
 
 export type WidgetType =
   | "chart"
+  | "multi_chart"
   | "watchlist"
   | "quote"
   | "news"
   | "ai_chat"
+  | "ai_signals"
   | "portfolio"
   | "screener"
   | "options_flow"

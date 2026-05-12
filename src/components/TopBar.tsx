@@ -16,7 +16,8 @@ import {
   X,
   Pause,
   Play,
-  Gauge
+  Gauge,
+  Brain
 } from "lucide-react";
 import clsx from "clsx";
 import { WIDGET_CATALOG } from "./widgets";
@@ -171,6 +172,7 @@ export function TopBar() {
           <span>Search…</span>
           <span className="ml-1 px-1 py-px text-[9.5px] rounded bg-bg-3 text-ink-mute">⌘K</span>
         </button>
+        <AIModeToggle />
         <SpeedControl />
         <ConnectionPill />
         <div className="text-[10.5px] font-mono text-ink-dim hidden sm:block">
@@ -230,6 +232,37 @@ function SpeedControl() {
         </div>
       )}
     </div>
+  );
+}
+
+function AIModeToggle() {
+  const aiMode = useWorkspace((s) => s.ui.aiMode);
+  const setUI = useWorkspace((s) => s.setUI);
+  return (
+    <button
+      onClick={() => setUI({ aiMode: !aiMode })}
+      title="Toggle AI Mode — chart overlays, news digest, signal annotations"
+      className={clsx(
+        "h-7 px-2 rounded border flex items-center gap-1 text-[10.5px] font-mono uppercase tracking-wider",
+        aiMode
+          ? "border-falcon-amber/60 bg-falcon-amber/15 text-falcon-amber shadow-[0_0_12px_-2px_rgba(255,176,32,0.4)]"
+          : "border-line-soft text-ink-mute hover:text-ink hover:bg-bg-2"
+      )}
+    >
+      <Brain size={11} className={aiMode ? "animate-pulse" : ""} />
+      AI Mode
+      <span className={clsx(
+        "ml-0.5 w-6 h-3 rounded-full relative transition-colors",
+        aiMode ? "bg-falcon-amber/40" : "bg-bg-3"
+      )}>
+        <span
+          className={clsx(
+            "absolute top-0.5 w-2 h-2 rounded-full transition-all",
+            aiMode ? "left-3.5 bg-falcon-amber" : "left-0.5 bg-ink-mute"
+          )}
+        />
+      </span>
+    </button>
   );
 }
 
