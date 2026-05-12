@@ -1,9 +1,11 @@
 import { NavBar } from "@/components/landing/NavBar";
 import { Hero } from "@/components/landing/Hero";
-import { LiveTickers } from "@/components/landing/LiveTickers";
-import { Manifesto } from "@/components/landing/Manifesto";
 import { TerminalPreview } from "@/components/landing/TerminalPreview";
+import { Movers } from "@/components/landing/Movers";
+import { LiveTickers } from "@/components/landing/LiveTickers";
 import { Features } from "@/components/landing/Features";
+import { About } from "@/components/landing/About";
+import { Manifesto } from "@/components/landing/Manifesto";
 import { Pricing } from "@/components/landing/Pricing";
 import { FAQ } from "@/components/landing/FAQ";
 import { CtaBand } from "@/components/landing/CtaBand";
@@ -17,10 +19,12 @@ export default function LandingPage() {
       <div className="relative z-10">
         <NavBar />
         <Hero />
-        <LiveTickers />
-        <Manifesto />
         <TerminalPreview />
+        <Movers />
+        <LiveTickers />
         <Features />
+        <About />
+        <Manifesto />
         <Pricing />
         <FAQ />
         <CtaBand />

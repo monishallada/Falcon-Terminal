@@ -18,9 +18,24 @@ const GROUPS: Group[] = [
     chipColor: "#7c89a6"
   },
   {
-    title: "Top US stocks",
+    title: "Mega caps",
     symbols: ["NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA"],
     chipColor: "#1c1f29"
+  },
+  {
+    title: "Semis & AI",
+    symbols: ["NVDA", "AMD", "TSM", "AVGO", "MU", "SMCI", "ARM"],
+    chipColor: "#1f2a3d"
+  },
+  {
+    title: "Banks & financials",
+    symbols: ["JPM", "BAC", "WFC", "GS", "MS", "C", "BLK"],
+    chipColor: "#1d2a23"
+  },
+  {
+    title: "Energy & commodities",
+    symbols: ["XOM", "CVX", "OXY", "SLB", "USO", "GLD", "CL"],
+    chipColor: "#2d2519"
   },
   {
     title: "Crypto majors",
@@ -39,12 +54,15 @@ export function LiveTickers() {
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
         <div className="flex items-center gap-3 mb-10">
           <span className="block w-1.5 h-1.5 rounded-full bg-bull animate-pulse" />
-          <span className="spaced-display text-[10.5px] uppercase tracking-[0.4em] text-white/85">
-            Live · streaming from the Falcon engine
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.32em] text-white/85">
+            Live · six themes · streaming tick-by-tick
+          </span>
+          <span className="ml-auto font-mono text-[10.5px] uppercase tracking-[0.18em] text-white/40 hidden sm:inline">
+            scroll horizontally →
           </span>
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-10">
           {GROUPS.map((g) => (
             <div key={g.title}>
               <div className="flex items-baseline justify-between mb-4">

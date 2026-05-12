@@ -1,87 +1,44 @@
 "use client";
-import { StarField } from "./StarField";
 
 /**
- * Full-page cosmic backdrop. Fixed-positioned behind everything else on the
- * landing route, so the starfield and nebulae are visible across every
- * section as the user scrolls — Falcon's "operating in space" brand
- * language carried beyond the hero.
- *
- * Layered (back → front):
- *   1. Pure black canvas
- *   2. Distant star layers (parallax drift)
- *   3. Soft nebula gas clouds at different scroll depths
- *   4. Subtle grain (mix-blend screen)
+ * Lightweight static backdrop for the landing page. Replaces the prior
+ * animated starfield + breathing nebulae, which caused noticeable scroll
+ * jank on lower-end machines. We keep a faint amber/blue wash + a fixed
+ * grid so the page still reads "terminal" without burning frames.
  */
 export function CosmicBackdrop() {
   return (
     <div
-      className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black"
+      className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#06080d]"
       aria-hidden
     >
-      {/* Vertical fade so the very top reads slightly darker (deep space) */}
+      {/* Static color wash — amber top-left, deep blue bottom-right */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: [
+            "radial-gradient(ellipse 60% 50% at 12% 0%, rgba(240, 193, 75, 0.10), rgba(0,0,0,0) 55%)",
+            "radial-gradient(ellipse 70% 55% at 90% 100%, rgba(40, 90, 180, 0.14), rgba(0,0,0,0) 60%)"
+          ].join(", ")
+        }}
+      />
+      {/* Faint terminal grid */}
+      <div
+        className="absolute inset-0 opacity-[0.045]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+          backgroundSize: "56px 56px"
+        }}
+      />
+      {/* Top + bottom vignette so content reads clean */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 30%, rgba(15, 22, 50, 0.55) 0%, rgba(0, 0, 0, 0) 60%)"
+            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.6) 100%)"
         }}
       />
-
-      {/* Nebula clouds — soft, slow, breathing */}
-      <div
-        className="nebula nebula-anim"
-        style={{
-          top: "8vh",
-          left: "-12vw",
-          width: "60vw",
-          height: "60vw",
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(255, 200, 90, 0.18) 0%, rgba(255, 160, 60, 0.06) 35%, rgba(0,0,0,0) 70%)"
-        }}
-      />
-      <div
-        className="nebula nebula-anim"
-        style={{
-          top: "60vh",
-          right: "-18vw",
-          width: "70vw",
-          height: "70vw",
-          animationDelay: "-8s",
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(120, 90, 220, 0.18) 0%, rgba(80, 110, 220, 0.07) 35%, rgba(0,0,0,0) 70%)"
-        }}
-      />
-      <div
-        className="nebula nebula-anim"
-        style={{
-          top: "150vh",
-          left: "30vw",
-          width: "55vw",
-          height: "55vw",
-          animationDelay: "-14s",
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(70, 200, 230, 0.14) 0%, rgba(50, 130, 220, 0.06) 35%, rgba(0,0,0,0) 70%)"
-        }}
-      />
-      <div
-        className="nebula nebula-anim"
-        style={{
-          top: "230vh",
-          right: "10vw",
-          width: "45vw",
-          height: "45vw",
-          animationDelay: "-20s",
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(240, 193, 75, 0.15) 0%, rgba(255, 120, 60, 0.06) 35%, rgba(0,0,0,0) 70%)"
-        }}
-      />
-
-      {/* Stars — three drift layers covering the full backdrop */}
-      <StarField density={520} />
-
-      {/* Subtle grain on top (so monochromatic gradients don't band on cheap displays) */}
-      <div className="cosmic-grain" />
     </div>
   );
 }
